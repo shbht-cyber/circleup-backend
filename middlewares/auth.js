@@ -10,10 +10,9 @@ async function userAuth(req, res, next) {
         .json({ message: "Access denied, no token provided" });
     }
 
-    const decodedToken = await jwt.verify(token, process.env.JWT_SECRET);
-    const { _id } = decodedToken;
+    const decoded = await jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
 
-    const user = await User.findById(_id);
     if (!user) {
       return res.status(404).json({ error: "User does not exist" });
     }
