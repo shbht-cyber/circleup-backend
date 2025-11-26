@@ -145,4 +145,56 @@ router.get("/get", userAuth, async (req, res) => {
   }
 });
 
+//follow a user
+router.put("/:id/follow", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const targetId = req.params.id;
+
+    // Prevent self follow
+    if (loggedInUser._id.toString() === targetId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot follow your own account",
+      });
+    }
+
+    // Check target user exists
+    const targetUser = await User.findById(targetId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Check if already following
+    if (targetUser.followers.includes(loggedInUser._id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You are already following this user",
+      });
+    }
+
+    // Update followers and following
+    targetUser.followers.push(loggedInUser._id);
+    loggedInUser.followings.push(targetId);
+
+    await targetUser.save();
+    await loggedInUser.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "User followed successfully",
+    });
+  } catch (err) {
+    console.error("Follow user Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
 module.exports = router;
