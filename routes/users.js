@@ -93,4 +93,21 @@ router.put("/update", userAuth, async (req, res) => {
   }
 });
 
+//delete a user
+router.delete("/delete", userAuth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete({ _id: req.user._id });
+    res
+      .status(200)
+      .json({ success: true, message: "Profile deleted successfully" });
+  } catch (err) {
+    console.error("Delete Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
 module.exports = router;
