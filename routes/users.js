@@ -84,7 +84,7 @@ router.put("/update", userAuth, async (req, res) => {
       user: safeUser,
     });
   } catch (err) {
-    console.error("Update Error:", err);
+    console.error("Update user Error:", err);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -97,11 +97,46 @@ router.put("/update", userAuth, async (req, res) => {
 router.delete("/delete", userAuth, async (req, res) => {
   try {
     await User.findByIdAndDelete({ _id: req.user._id });
-    res
+    return res
       .status(200)
       .json({ success: true, message: "Profile deleted successfully" });
   } catch (err) {
-    console.error("Delete Error:", err);
+    console.error("Delete user Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
+// get user
+router.get("/get", userAuth, async (req, res) => {
+  try {
+    const user = req.user;
+
+    const data = {
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      coverPicture: user.coverPicture,
+      followers: user.followers,
+      followings: user.followings,
+      desc: user.desc,
+      city: user.city,
+      from: user.from,
+      relationship: user.relationship,
+      isAdmin: user.isAdmin,
+    };
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile fetched successfully",
+      user: data,
+    });
+  } catch (err) {
+    console.error("Get user Error:", err);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
