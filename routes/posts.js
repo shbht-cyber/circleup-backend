@@ -201,4 +201,85 @@ router.put("/:id/like", userAuth, async (req, res) => {
   }
 });
 
+// Get post by ID
+router.get("/:id", userAuth, async (req, res) => {
+  try {
+    const postId = req.params.id;
+
+    const post = await Post.findById(postId);
+
+    // If no post found
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Post fetched successfully",
+      post: {
+        id: post._id,
+        userId: post.userId,
+        desc: post.desc,
+        img: post.img,
+        likes: post.likes,
+        likesCount: post.likes.length,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+      },
+    });
+  } catch (err) {
+    console.error("Get Post Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
+// Get timeline posts
+router.get("/timeline/feed", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+
+    // 1. Get user's own posts
+    const userPosts = await Post.find({ userId: loggedInUser._id });
+
+    // 2. Get posts of users they follow
+    const friendPosts = await Post.find({
+      userId: { $in: loggedInUser.followings },
+    });
+
+    // 3. Combine & sort by newest
+    const timelinePosts = [...userPosts, ...friendPosts].sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Timeline fetched successfully",
+      count: timelinePosts.length,
+      posts: timelinePosts.map((post) => ({
+        id: post._id,
+        userId: post.userId,
+        desc: post.desc,
+        img: post.img,
+        likes: post.likes,
+        likesCount: post.likes.length,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+      })),
+    });
+  } catch (err) {
+    console.error("Timeline Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
 module.exports = router;
