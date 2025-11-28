@@ -146,10 +146,53 @@ router.delete("/:id", userAuth, async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Post deleted successfully",
-      deletedPostId: postId,
     });
   } catch (err) {
     console.error("Delete Post Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
+// Like / Unlike a post
+router.put("/:id/like", userAuth, async (req, res) => {
+  try {
+    const postId = req.params.id;
+    const loggedInUserId = req.user._id.toString();
+
+    const post = await Post.findById(postId);
+
+    // Check if post exists
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: "Post not found",
+      });
+    }
+
+    // Check if user already liked the post
+    const alreadyLiked = post.likes.includes(loggedInUserId);
+
+    if (!alreadyLiked) {
+      await post.updateOne({ $push: { likes: loggedInUserId } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Post liked successfully",
+      });
+    } else {
+      await post.updateOne({ $pull: { likes: loggedInUserId } });
+
+      return res.status(200).json({
+        success: true,
+        message: "Post unliked successfully",
+      });
+    }
+  } catch (err) {
+    console.error("Like Post Error:", err);
     return res.status(500).json({
       success: false,
       message: "Internal server error",
