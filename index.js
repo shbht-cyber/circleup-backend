@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 
 const userRoute = require("./routes/users");
 const authRoute = require("./routes/auth");
+const postRoute = require("./routes/posts");
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(morgan("common"));
 
 app.use("/api/users", userRoute);
 app.use("/api/auth", authRoute);
+app.use("/api/posts", postRoute);
 
 app.listen(process.env.PORT || 3001, () => {
   console.log("backend server is started at port", process.env.PORT);
