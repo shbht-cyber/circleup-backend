@@ -197,4 +197,55 @@ router.put("/:id/follow", userAuth, async (req, res) => {
   }
 });
 
+// Unfollow a user
+router.put("/:id/unfollow", userAuth, async (req, res) => {
+  try {
+    const loggedInUser = req.user;
+    const targetId = req.params.id;
+
+    // Prevent self-unfollow attempt
+    if (loggedInUser._id.toString() === targetId) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot unfollow your own account",
+      });
+    }
+
+    // Find target user
+    const targetUser = await User.findById(targetId);
+    if (!targetUser) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Check if already NOT following
+    if (!targetUser.followers.includes(loggedInUser._id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You are not following this user",
+      });
+    }
+
+    // Remove logged in user as follower
+    await targetUser.updateOne({ $pull: { followers: loggedInUser._id } });
+
+    // Remove target from logged in user's followings
+    await loggedInUser.updateOne({ $pull: { followings: targetId } });
+
+    return res.status(200).json({
+      success: true,
+      message: "Successfully unfollowed the user",
+    });
+  } catch (err) {
+    console.error("Unfollow User Error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: err.message,
+    });
+  }
+});
+
 module.exports = router;
